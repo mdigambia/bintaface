@@ -501,3 +501,444 @@ Please add another different 2 - 5 users by updating the content of the POST req
 
 ## Step 9
 
+In this step we will learn how to retrieve data for **all users**. This method should work for getting data from any table.
+
+So let's go to the **user controller**, in the **/controllers/user.js** let's do the following code to get all the users from the database
+
+```js
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({});
+
+    return res.status(201).json({ data: users });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handle, let's export it so that our router can see it. To do that update the module.exports to add `getAllUsers` to the export list.
+
+```js
+module.exports = {
+  createUser,
+  getAllUsers
+};
+```
+
+So far our **user.js** controller should look like this
+
+```js
+const User = require('../models/user');
+
+const createUser = async (req, res) => {
+  const content = req.body;
+
+  console.log(content);
+  try {
+    const user = await User.create({ ...content });
+
+    return res.status(201).json({ data: user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({});
+
+    return res.status(201).json({ data: users });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+
+
+
+module.exports = {
+  createUser,
+  getAllUsers
+};
+```
+
+Once you do that let's require it in the **/routers/route.js** file.
+
+currently our require for the user controller looks like this
+
+```js
+const { createUser } = require('../controllers/user');
+```
+
+let's add the new `getAllUsers` handler to that line. it should now look like this:
+
+```js
+const { createUser, getAllUsers } = require('../controllers/user');
+```
+
+Finally, let's add the route to the user route
+
+```js
+router.get('/user', getAllUsers);
+```
+
+The final code for the /route.js should like this
+
+```js
+const express = require('express');
+const router = express.Router();
+
+const { createUser, getAllUsers } = require('../controllers/user');
+
+
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+
+
+module.exports = router;
+```
+
+Note the new changes in the router.js file, especially the verb is now **get**, not **post** like when we were creating.
+
+Let's test and see of we will get all the users using out rest client
+
+Inside **requests** create a file called **get-all.rest**
+
+In that file, let's send a get request to get all the users, see the code below for that.
+
+```
+GET http://localhost:3001/api/user
+```
+
+You see a list of all the users in the you db like the one below. I only have one user
+
+```js
+{
+  "data": [
+    {
+      "email": "ac@camariana.gm",
+      "firstname": "A",
+      "minit": "",
+      "lastname": "Camariana",
+      "role": "User",
+      "createdAt": "2022-10-15T07:06:03.201Z",
+      "updatedAt": "2022-10-15T07:06:03.201Z",
+      "id": "634a5bdb441c0826a1b5e678"
+    }
+  ]
+}
+```
+
+Copy and paste your results to slack, let me see your users.
+
+## Step 10
+
+We wil now create a handler to get only **one user**.
+
+So let's go back to the **user controller**. in the **/controllers/user.js** let's do the following code to get one user from the database
+
+```js
+const getOneUser = async (req, res) => {
+  const id = req.params.id
+  try {
+    const user = await User.findOne({ _id: id });
+
+    if (!user) {
+      return res.status(400).json({ message: 'user not found' });
+    }
+    return res.status(201).json({ data: user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handle, let's export it so that our router can see it. like this below
+
+```js
+
+module.exports = {
+  createUser,
+  getAllUsers,
+  getOneUser
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createUser, getAllUsers, getOneUser } = require('../controllers/user');
+```
+
+and add it to the route
+
+```js
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+router.get('/user/:id', getOneUser);
+```
+
+Note how we add the parameter to the path `'/user/:id'` 
+
+Let's test and see of we will get one user using out rest client
+
+Inside **requests** create a file called **get-one.rest**
+
+In that file, let's send a get request to get one user, see the code below for that.
+
+```js
+GET http://localhost:3001/api/user/6306ae79da5f62731c434830
+```
+
+Note: look at what is after the forward slash after the /user/... <-- this is the id of the user we are looking for.
+
+If you use this id it will say not found. so copy one of the id from your users response and paste it after the /user/here and send a request, you should get that single user data like mine here
+
+```js
+{
+  "data": {
+    "email": "ac@camariana.gm",
+    "firstname": "A",
+    "minit": "",
+    "lastname": "Camariana",
+    "role": "User",
+    "createdAt": "2022-10-15T07:06:03.201Z",
+    "updatedAt": "2022-10-15T07:06:03.201Z",
+    "id": "634a5bdb441c0826a1b5e678"
+  }
+}
+```
+
+## Step 11
+
+We wil now create a handler to update only **one user**.
+
+So let's go back to the **user controller**. in the **/controllers/user.js** let's do the following code to update one user from the database
+
+```js
+const updateOne = async (req, res) => {
+  const id = req.params.id
+  const content = req.body
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: id },
+      content,
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(400).json({ message: 'user not found' });
+    }
+    return res.status(201).json({ data: user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handler, let's export it, so that our router can see it. like this below
+
+```js
+module.exports = {
+  createUser,
+  getAllUsers,
+  getOneUser,
+  updateOne
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createUser, getAllUsers, getOneUser, updateOne } = require('../controllers/user');
+
+```
+
+and add it to the route
+
+```js
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+router.get('/user/:id', getOneUser);
+router.put('/user/:id', updateOne);
+```
+
+Note how we add the parameter to the path `'/user/:id'` and note the verb here is **put** instead of **get**
+
+Let's test and see if we will update one user using out rest client
+
+Inside **requests** create a file called **update-one.rest**
+
+In that file, let's send a get request to update one user, see the code below for that.
+
+```js
+PUT http://localhost:3001/api/user/634a5bdb441c0826a1b5e678
+content-type: application/json
+
+{
+  "email": "ac@camariana.gm",
+  "firstname": "A",
+  "minit": "",
+  "lastname": "Camara",
+  "role": "Admin"
+}
+```
+
+Note: look at what is after the forward slash after the /user/... <-- this is the id of the user we are looking for to update.
+
+Look at what I am also updating, the **lastname** and the **role** to Admin
+
+If you use this id it will say not found. so copy one of the id from your users response and paste it after the /user/here and send a request, you should get that single user data like mine here
+
+```js
+{
+  "data": {
+    "email": "ac@camariana.gm",
+    "firstname": "A",
+    "minit": "",
+    "lastname": "Camara",
+    "role": "Admin",
+    "createdAt": "2022-10-15T07:06:03.201Z",
+    "updatedAt": "2022-10-21T12:26:10.448Z",
+    "id": "634a5bdb441c0826a1b5e678"
+  }
+}
+```
+
+So what changes?
+
+Before the changes the user data was like this:
+
+```js
+{
+  "data": {
+    "email": "ac@camariana.gm",
+    "firstname": "A",
+    "minit": "",
+    "lastname": "Camariana",
+    "role": "User",
+    "createdAt": "2022-10-15T07:06:03.201Z",
+    "updatedAt": "2022-10-15T07:06:03.201Z",
+    "id": "634a5bdb441c0826a1b5e678"
+  }
+}
+```
+
+So what changes?
+
+I updated the **lastname** and the **role**. Compare the above file and the updated one above it.
+
+## Step 12
+
+We wil now create a handler to **delete** only **one user**.
+
+So let's go back to the **user controller**. in the **/controllers/user.js** let's do the following code to delete one user from the database
+
+```js
+const deleteOne = async (req, res) => {
+  const id = req.params.id
+
+  try {
+    const user = await User.findOneAndRemove({ _id: id });
+
+    if (!user) {
+      return res.status(400).json({ message: 'user not found' });
+    }
+    return res.status(201).json({ message: 'deleted successfully', data: user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handler, let's export it, so that our router can see it. like this below
+
+```js
+module.exports = {
+  createUser,
+  getAllUsers,
+  getOneUser,
+  updateOne,
+  deleteOne
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createUser, getAllUsers, getOneUser, updateOne, deleteOne } = require('../controllers/user');
+```
+
+and add it to the route
+
+```js
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+router.get('/user/:id', getOneUser);
+router.put('/user/:id', updateOne);
+router.delete('/user/:id', deleteOne);
+```
+
+Note how we add the parameter to the path `'/user/:id'` and note the verb here is **delete** instead of **get** or **put**
+
+Let's test and see if we will update one user using out rest client
+
+Inside **requests** create a file called **delete-one.rest**
+
+In that file, let's send a get request to update one user, see the code below for that.
+
+```js
+DELETE http://localhost:3001/api/user/634a5bdb441c0826a1b5e678
+```
+
+If all goes well, you should see a similar message like the one below
+
+```js
+{
+  "message": "deleted successfully",
+  "data": {
+    "email": "ac@camariana.gm",
+    "firstname": "A",
+    "minit": "",
+    "lastname": "Camara",
+    "role": "Admin",
+    "createdAt": "2022-10-15T07:06:03.201Z",
+    "updatedAt": "2022-10-21T12:26:10.448Z",
+    "id": "634a5bdb441c0826a1b5e678"
+  }
+}
+```
+
+Note: in the above object, the first property in the object says this
+
+```js
+"message": "deleted successfully",
+```
+
+and finally the data that was deleted
+
+```js
+"data": {
+    "email": "ac@camariana.gm",
+    "firstname": "A",
+    "minit": "",
+    "lastname": "Camara",
+    "role": "Admin",
+    "createdAt": "2022-10-15T07:06:03.201Z",
+    "updatedAt": "2022-10-21T12:26:10.448Z",
+    "id": "634a5bdb441c0826a1b5e678"
+  }
+```
+
+Okays folks, we have seen all the so called CRUD operations in as far as databases are concern. Their is more to it anyways, but we will see.
