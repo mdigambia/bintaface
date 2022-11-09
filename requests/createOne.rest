@@ -2,9 +2,22 @@ POST http://localhost:3001/api/user HTTP/1.1
 content-type: application/json 
 
 {
-  "email": "ac@camariana.gm",
-  "password": "secret",
-  "firstname": "A",
+  "email": "anna@datalu.gm",
+  "password": "dibzy",
+  "firstname": "Anna",
   "minit": "",
-  "lastname": "Camariana"
+  "lastname": "Dibba"
+}
+
+
+###
+POST http://localhost:3001/api/sale HTTP/1.1
+content-type: application/json 
+
+{
+  "description": "Apple",
+  "qty": 2,
+  "price": 200,
+  "Total": 400,
+  "userId": "636b76ea9daaabbcecf21442"
 }

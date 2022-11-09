@@ -942,3 +942,426 @@ and finally the data that was deleted
 ```
 
 Okays folks, we have seen all the so called CRUD operations in as far as databases are concern. Their is more to it anyways, but we will see.
+
+
+
+## Step 13
+
+With this step we want to establish a one-to-many relationship and also learn to do references across collections. With that in mind, let's look at the two entities user (User) and sales (Sale)
+
+User -----> Sale
+
+Let's assume that the *users* collection contains two users:
+
+```js
+{
+  "data": [
+    {
+      "email": "ac@camariana.gm",
+      "firstname": "A",
+      "minit": "",
+      "lastname": "Camariana",
+      "role": "User",
+      "createdAt": "2022-11-05T10:37:43.369Z",
+      "updatedAt": "2022-11-05T10:37:43.369Z",
+      "id": "63663cf7061d3c204ad2747c"
+    },
+    {
+      "email": "maria@camariana.gm",
+      "firstname": "Maria",
+      "minit": "",
+      "lastname": "Qibtiyya",
+      "role": "User",
+      "createdAt": "2022-11-09T09:25:39.327Z",
+      "updatedAt": "2022-11-09T09:25:39.327Z",
+      "id": "636b72139daaabbcecf2143f"
+    }
+  ]
+}
+```
+
+The *sales* collection contains three sales that all have a *user* field that references a user in the *users* collection:
+
+```js
+```
+
+Document databases do not demand the foreign key to be stored in the sale resources, it could *also* be stored in the users collection, or even both:
+
+```js
+```
+
+Since users can have many sales, the related ids are stored in an array in the *sales* field.
+
+### The Schema for sale
+
+This could collection could be any of your collections, we are just learning how to do one-to-many relationship and also learn to do references across collections.
+
+Now inside the **/models** folder create a new file caled **sale.js** and do the following code in it
+
+Here's the code for our sale.js model (this might be a different model for you). 
+
+**Note: Look at your model and adhere to the name and the attributes (fields) you have in your model and use those.**
+
+```js
+const mongoose = require('mongoose')
+
+const saleSchema = new mongoose.Schema(
+  {
+    description: {
+      type: String,
+      required: true,
+    },
+    qty: {
+      type: Number,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    Total: {
+      type: Number,
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user'
+    }
+  },
+  { timestamps: true }
+)
+
+
+saleSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
+
+
+const Sale  = mongoose.model('sale', saleSchema)
+
+module.exports = Sale
+```
+
+The sale references the user who created it, by this line
+
+```js
+user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
+}
+```
+
+
+
+Let's go back and expand our user model to reference all of the sales created by a user.
+
+Here's the expanded code of the user
+
+```js
+const mongoose = require('mongoose')
+
+const userSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true
+    },
+    password: {
+      type: String,
+      required: true
+    },
+    firstname: {
+      type: String,
+      trim: true,
+      maxlength: 25
+    },
+    minit: {
+      type: String,
+      trim: true,
+      maxlength: 25
+    },
+    lastname: {
+      type: String,
+      trim: true,
+      maxlength: 25
+    },
+    role: {
+      type: String,
+      enum: ['Admin', 'User'], 
+      default: 'User'
+    },
+    sales: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'sale'
+      }
+    ]
+  },
+  { timestamps: true }
+)
+
+
+userSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+    // the password should not be revealed
+    delete returnedObject.password
+  }
+})
+
+
+const User  = mongoose.model('user', userSchema)
+
+module.exports = User
+```
+
+The user has an array of references to all of the sales created by a user.
+
+The ids of the sales are stored within the user document as an array of Mongo ids. The definition is as follows:
+
+```js
+sales: [
+    {
+       type: mongoose.Schema.Types.ObjectId,
+       ref: 'sale'
+    }
+]
+```
+
+
+
+Now's let's test by creating new user and see what happens. To do that go back to your **create-one.rest** and a different user by editing the object in there.
+
+Here's my new user
+
+```js
+POST http://localhost:3001/api/user HTTP/1.1
+content-type: application/json 
+
+{
+  "email": "anna@datalu.gm",
+  "password": "dibzy",
+  "firstname": "Anna",
+  "minit": "",
+  "lastname": "Dibba"
+}
+```
+
+
+
+If that happen successfully, you should now see a response like this
+
+```js
+{
+  "data": {
+    "email": "anna@datalu.gm",
+    "firstname": "Anna",
+    "minit": "",
+    "lastname": "Dibba",
+    "role": "User",
+    "sales": [],
+    "createdAt": "2022-11-09T09:46:18.507Z",
+    "updatedAt": "2022-11-09T09:46:18.507Z",
+    "id": "636b76ea9daaabbcecf21442"
+  }
+}
+```
+
+Note: on line 8, we now have the sales array. It's empty at the moment because this user hasn't made any sales yet.
+
+```js
+"sales": [],
+```
+
+## Step 14
+
+Now lets create a new sale (Again, for you this might be a different entity)
+
+Inside the **/controllers** folder, create a file called **sale.js** 
+
+We will first require the following models into the sale controller:
+
+1. The Sale model
+2. The User model
+
+```js
+const Sale = require('../models/sale');
+const User = require('../models/user');
+
+
+const createSale = async (req, res) => {
+  const content = req.body;
+  const user = await User.findById(content.userId);
+  
+  try {
+    const sale = await Sale.create({ user: content.userId,  ...content })
+    
+    user.sales = user.sales.concat(sale._id)
+    await user.save();
+
+    return res.status(201).json({ data: sale });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+
+
+
+module.exports = {
+  createSale,
+};
+```
+
+A lot is happening here, let's explain each one
+
+First, we find the user who is creating the sale
+
+```js
+const user = await User.findById(content.userId);
+```
+
+Note: we are currently manually putting this userId in the request for now. Under normal cercumstances this will be the logged in user.
+
+Next, we create a sale by putting the userId to the user filed and the spread the rest of the content
+
+```js
+const sale = await Sale.create({ user: content.userId,  ...content })
+```
+
+Next, we add the id of the current sale to the sales array in the user collection and then save it.
+
+```js
+user.sales = user.sales.concat(sale._id)
+await user.save();
+```
+
+finally reponse to the user with the current sales
+
+```js
+return res.status(201).json({ data: sale });
+```
+
+
+
+Once you do that let's require it in the **/routers/route.js** file.
+
+Remember we have also require the new sale controller first like this below
+
+```js
+const { createSale,  } = require('../controllers/sale');
+```
+
+And, let's add the route to the sale route
+
+```js
+router.get('/sale', createSale);
+```
+
+The code for the /route.js should now look like this:
+
+```js
+const express = require('express');
+const router = express.Router();
+
+const { createUser, getAllUsers, getOneUser, updateOne, deleteOne } = require('../controllers/user');
+const { createSale,  } = require('../controllers/sale');
+
+
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+router.get('/user/:id', getOneUser);
+router.put('/user/:id', updateOne);
+router.delete('/user/:id', deleteOne);
+
+// Sale route
+router.post('/sale', createSale);
+
+
+module.exports = router;
+```
+
+Take note of the following:
+
+1. Line 5 where we are requiring the sale controller
+2. line 16, where we are adding the creation of a new sale route
+
+Now let's test this endpoint and see if we can create a new sale.
+
+To do that, go to the  **create-one.rest** file inside the requests folder and add the following to create a new sale.
+
+```json
+###
+POST http://localhost:3001/api/sale HTTP/1.1
+content-type: application/json 
+
+{
+  "description": "Apple",
+  "qty": 2,
+  "price": 200,
+  "Total": 400,
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+Note on line 1, the three # tags, this help us create many requests in one file
+
+And also note, I am hard coding the id of the user at line 10 by copying the id of the last user I created in step 13.
+
+The code of **create-one.rest** should now look like this:
+
+```json
+POST http://localhost:3001/api/user HTTP/1.1
+content-type: application/json 
+
+{
+  "email": "anna@datalu.gm",
+  "password": "dibzy",
+  "firstname": "Anna",
+  "minit": "",
+  "lastname": "Dibba"
+}
+
+
+###
+POST http://localhost:3001/api/sale HTTP/1.1
+content-type: application/json 
+
+{
+  "description": "Apple",
+  "qty": 2,
+  "price": 200,
+  "Total": 400,
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+Okay now send the request to create a new sale.
+
+If all goes well, you should see a similar response
+
+```js
+{
+  "data": {
+    "description": "Apple",
+    "qty": 2,
+    "price": 200,
+    "Total": 400,
+    "user": "636b76ea9daaabbcecf21442",
+    "createdAt": "2022-11-09T10:16:20.372Z",
+    "updatedAt": "2022-11-09T10:16:20.372Z",
+    "id": "636b7df4cd10931235c5976c"
+  }
+}
+```
+
+Note on line 7, where the user has the id of the user
