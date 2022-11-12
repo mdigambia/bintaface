@@ -1263,7 +1263,7 @@ const { createSale,  } = require('../controllers/sale');
 And, let's add the route to the sale route
 
 ```js
-router.get('/sale', createSale);
+router.post('/sale', createSale);
 ```
 
 The code for the /route.js should now look like this:
