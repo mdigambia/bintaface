@@ -1365,3 +1365,428 @@ If all goes well, you should see a similar response
 ```
 
 Note on line 7, where the user has the id of the user
+
+
+
+## Step 15
+
+In this step we will retrieve data for **all sales** made by a user
+
+So let's go to the **sale controller**, in the **/controllers/sale.js** let's do the following code to get all the sales from the database for  a particular user
+
+```js
+const getAllSale = async (req, res) => {
+  const userId = req.body.userId;
+
+  try {
+    const sales = await Sale.find({ user: userId });
+
+    return res.status(201).json({ data: sales });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+On line number 2, we are manually passing the userId for now, so that we can the sales of that user. But this should be the logged In user. Once we implement authentication, there will no need for this.
+
+```js
+const userId = req.body.userId;
+```
+
+Next, we try to find the sales made by that user in the try statement like so
+
+```js
+const sales = await Sale.find({ user: userId });
+```
+
+Next up we export our handler
+
+```js
+module.exports = {
+  createSale,
+  getAllSale
+};
+```
+
+Once you do that let's require it in the **/routers/route.js** file.
+
+currently our require for the sale controller looks like this
+
+```js
+const { createSale  } = require('../controllers/sale');
+```
+
+let's add the new `getAllSale` handler to that line. it should now look like this:
+
+```js
+const { createSale, getAllSale  } = require('../controllers/sale');
+```
+
+Finally, let's add the route to the sale route
+
+```js
+router.get('/sale', getAllSale);
+```
+
+The updated code for the /route.js should like this
+
+```js
+const express = require('express');
+const router = express.Router();
+
+const { createUser, getAllUsers, getOneUser, updateOne, deleteOne } = require('../controllers/user');
+const { createSale, getAllSale  } = require('../controllers/sale');
+
+
+// User route
+router.post('/user', createUser);
+router.get('/user', getAllUsers);
+router.get('/user/:id', getOneUser);
+router.put('/user/:id', updateOne);
+router.delete('/user/:id', deleteOne);
+
+// Sale route
+router.post('/sale', createSale);
+router.get('/sale', getAllSale);
+
+
+module.exports = router;
+```
+
+Now let's test this endpoint and see if we can get all the sales of a particular user.
+
+To do that, go to the  **get-many.rest** file inside the requests folder and add the following at the bottom to get all the sales of a particular user.
+
+```js
+### Sale
+GET http://localhost:3001/api/sale HTTP/1.1
+content-type: application/json 
+
+{
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+If all works you should all the sales added by you in the previous step
+
+Here's is my response
+
+```js
+{
+  "data": [
+    {
+      "description": "Apple",
+      "qty": 2,
+      "price": 200,
+      "Total": 400,
+      "user": "636b76ea9daaabbcecf21442",
+      "createdAt": "2022-11-09T10:16:20.372Z",
+      "updatedAt": "2022-11-09T10:16:20.372Z",
+      "id": "636b7df4cd10931235c5976c"
+    },
+    {
+      "description": "Banana",
+      "qty": 10,
+      "price": 100,
+      "Total": 1000,
+      "user": "636b76ea9daaabbcecf21442",
+      "createdAt": "2022-11-18T07:55:37.642Z",
+      "updatedAt": "2022-11-18T07:55:37.642Z",
+      "id": "63773a79fcbfd67de6919422"
+    }
+  ]
+}
+```
+
+## Step 16
+
+We wil now create a handler to get only **one sale**.
+
+So let's go back to the **sale controller**. in the **/controllers/sale.js** let's do the following code to get one sale from the database
+
+```js
+const getOneSale = async (req, res) => {
+  const id = req.params.id
+  const userId = req.body.userId;
+
+  try {
+    const sale = await Sale.findOne({ _id: id, user: userId });
+
+    if (!sale) {
+      return res.status(400).json({ message: 'sale not found' });
+    }
+    return res.status(201).json({ data: sale });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Here the findOne function is passed in the id from the parameter and the Id of the assumed logged in user.
+
+```js
+const sale = await Sale.findOne({ _id: id, user: userId });
+```
+
+
+
+Once you add that handle, let's export it so that our router can see it. like this below
+
+```js
+module.exports = {
+  createSale,
+  getAllSale,
+  getOneSale
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createSale, getAllSale, getOneSale  } = require('../controllers/sale');
+```
+
+and add it to the route
+
+```js
+// Sale route
+router.post('/sale', createSale);
+router.get('/sale', getAllSale);
+router.get('/sale/:id', getOneSale);
+```
+
+Note how we add the parameter to the path `'/sale/:id'` 
+
+
+
+Now let's test this endpoint and see if we can get one sale of a particular user.
+
+To do that, go to the  **get-one.rest** file inside the requests folder and add the following at the bottom to get one sale of a particular user.
+
+```js
+### Sale
+GET http://localhost:3001/api/sale/63773a79fcbfd67de6919422
+content-type: application/json 
+
+{
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+Note: look at what is after the forward slash after the /sale/... <-- this is the id of the sale we are looking for.
+
+Here's my response
+
+```js
+{
+  "data": {
+    "description": "Banana",
+    "qty": 10,
+    "price": 100,
+    "Total": 1000,
+    "user": "636b76ea9daaabbcecf21442",
+    "createdAt": "2022-11-18T07:55:37.642Z",
+    "updatedAt": "2022-11-18T07:55:37.642Z",
+    "id": "63773a79fcbfd67de6919422"
+  }
+}
+```
+
+
+
+## Step 17
+
+We wil now create a handler to update only **one sale**.
+
+So let's go back to the **sale controller**. in the **/controllers/sale.js** let's do the following code to update one sale from the database
+
+```js
+const updateOneSale = async (req, res) => {
+  const id = req.params.id
+  const userId = req.body.userId;
+  const content = req.body
+
+  try {
+    const sale = await Sale.findOneAndUpdate(
+      { _id: id, user: userId },
+      content,
+      { new: true }
+    );
+
+    if (!sale) {
+      return res.status(400).json({ message: 'sale not found' });
+    }
+    return res.status(201).json({ data: sale });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handler, let's export it, so that our router can see it. like this below
+
+```js
+module.exports = {
+  createSale,
+  getAllSale,
+  getOneSale,
+  updateOneSale
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createSale, getAllSale, getOneSale, updateOneSale  } = require('../controllers/sale');
+```
+
+and add it to the route
+
+```js
+// Sale route
+router.post('/sale', createSale);
+router.get('/sale', getAllSale);
+router.get('/sale/:id', getOneSale);
+router.put('/sale/:id', updateOneSale);
+```
+
+Note how we add the parameter to the path `'/sale/:id'` and note the verb here is **put** instead of **get**
+
+Now let's test this endpoint and see if we can update one sale of a particular user.
+
+To do that, go to the  **update-one.rest** file inside the requests folder and add the following at the bottom to update one sale of a particular user.
+
+```js
+### sale
+PUT http://localhost:3001/api/sale/63773a79fcbfd67de6919422
+content-type: application/json
+
+{
+  "description": "Banana",
+  "qty": 5,
+  "price": 100,
+  "Total": 500,
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+Look at what I am also updating, the **qty** the **price** and the **total** 
+
+Here'is my updated sale
+
+```js
+{
+  "data": {
+    "description": "Banana",
+    "qty": 5,
+    "price": 100,
+    "Total": 500,
+    "user": "636b76ea9daaabbcecf21442",
+    "createdAt": "2022-11-18T07:55:37.642Z",
+    "updatedAt": "2022-11-18T08:15:13.968Z",
+    "id": "63773a79fcbfd67de6919422"
+  }
+}
+```
+
+
+
+## Step 18
+
+We wil now create a handler to **delete** only **one sale**.
+
+So let's go back to the **sale controller**. in the **/controllers/sale.js** let's do the following code to delete one sale from the database
+
+```js
+const deleteOneSale = async (req, res) => {
+  const id = req.params.id
+  const userId = req.body.userId;
+
+  try {
+    const sale = await Sale.findOneAndRemove({ _id: id, user: userId });
+
+    if (!sale) {
+      return res.status(400).json({ message: 'sale not found' });
+    }
+    return res.status(201).json({ message: 'deleted successfully', data: sale });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).end();
+  }
+};
+```
+
+Once you add that handler, let's export it, so that our router can see it. like this below
+
+```js
+module.exports = {
+  createSale,
+  getAllSale,
+  getOneSale,
+  updateOneSale,
+  deleteOneSale
+};
+```
+
+Next, require it in the **/routers/route.js** file. and add the route
+
+```js
+const { createSale, getAllSale, getOneSale, updateOneSale, deleteOneSale  } = require('../controllers/sale');
+```
+
+and add it to the route
+
+```js
+// Sale route
+router.post('/sale', createSale);
+router.get('/sale', getAllSale);
+router.get('/sale/:id', getOneSale);
+router.put('/sale/:id', updateOneSale);
+router.delete('/sale/:id', deleteOneSale);
+```
+
+Note how we add the parameter to the path `'/sale/:id'` and note the verb here is **delete** instead of **get** or **put**
+
+Now let's test this endpoint and see if we can delete one sale of a particular user.
+
+To do that, go to the  **delete-one.rest** file inside the requests folder and add the following at the bottom to delete one sale of a particular user.
+
+```js
+### Sale
+DELETE http://localhost:3001/api/sale/63773a79fcbfd67de6919422
+content-type: application/json
+
+{
+  "userId": "636b76ea9daaabbcecf21442"
+}
+```
+
+If all goes well, you should see a similar message like the one below
+
+```js
+{
+  "message": "deleted successfully",
+  "data": {
+    "description": "Banana",
+    "qty": 5,
+    "price": 100,
+    "Total": 500,
+    "user": "636b76ea9daaabbcecf21442",
+    "createdAt": "2022-11-18T07:55:37.642Z",
+    "updatedAt": "2022-11-18T08:15:13.968Z",
+    "id": "63773a79fcbfd67de6919422"
+  }
+}
+```
+
+Note: in the above object, the first property in the object says this
+
+```js
+"message": "deleted successfully",
+```
+
+Okays folks, we have seen all the so called CRUD operations sale collection.

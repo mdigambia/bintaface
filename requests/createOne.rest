@@ -15,9 +15,9 @@ POST http://localhost:3001/api/sale HTTP/1.1
 content-type: application/json 
 
 {
-  "description": "Apple",
-  "qty": 2,
-  "price": 200,
-  "Total": 400,
+  "description": "Banana",
+  "qty": 10,
+  "price": 100,
+  "Total": 1000,
   "userId": "636b76ea9daaabbcecf21442"
 }

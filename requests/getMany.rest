@@ -1,1 +1,10 @@
 GET http://localhost:3001/api/user
+
+
+### Sale
+GET http://localhost:3001/api/sale HTTP/1.1
+content-type: application/json 
+
+{
+  "userId": "636b76ea9daaabbcecf21442"
+}

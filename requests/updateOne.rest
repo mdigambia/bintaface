@@ -6,3 +6,16 @@ content-type: application/json
   "lastname": "Camara",
   "role": "Admin"
 }
+
+
+### sale
+PUT http://localhost:3001/api/sale/63773a79fcbfd67de6919422
+content-type: application/json
+
+{
+  "description": "Banana",
+  "qty": 5,
+  "price": 100,
+  "Total": 500,
+  "userId": "636b76ea9daaabbcecf21442"
+}
