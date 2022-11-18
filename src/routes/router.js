@@ -5,14 +5,14 @@ const { createUser, getAllUsers, getOneUser, updateOne, deleteOne } = require('.
 const { createSale, getAllSale, getOneSale, updateOneSale, deleteOneSale  } = require('../controllers/sale');
 
 
-// User route
+// User route - yaat
 router.post('/user', createUser);
 router.get('/user', getAllUsers);
 router.get('/user/:id', getOneUser);
 router.put('/user/:id', updateOne);
 router.delete('/user/:id', deleteOne);
 
-// Sale route
+// Sale route - yaat
 router.post('/sale', createSale);
 router.get('/sale', getAllSale);
 router.get('/sale/:id', getOneSale);

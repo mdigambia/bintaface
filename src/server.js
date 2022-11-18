@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// Connect to Database
+// Connect to Database - yaat
 void (async () => {
   try {
     await connect();

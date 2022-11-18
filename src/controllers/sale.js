@@ -1,7 +1,7 @@
 const Sale = require('../models/sale');
 const User = require('../models/user');
 
-
+// yaat
 const createSale = async (req, res) => {
   const content = req.body;
   const user = await User.findById(content.userId);
@@ -19,6 +19,7 @@ const createSale = async (req, res) => {
   }
 };
 
+// yaat
 const getAllSale = async (req, res) => {
   const userId = req.body.userId;
 
@@ -32,6 +33,7 @@ const getAllSale = async (req, res) => {
   }
 };
 
+// yaat
 const getOneSale = async (req, res) => {
   const id = req.params.id
   const userId = req.body.userId;
@@ -49,6 +51,7 @@ const getOneSale = async (req, res) => {
   }
 };
 
+// yaat
 const updateOneSale = async (req, res) => {
   const id = req.params.id
   const userId = req.body.userId;
@@ -71,7 +74,7 @@ const updateOneSale = async (req, res) => {
   }
 };
 
-
+// yaat
 const deleteOneSale = async (req, res) => {
   const id = req.params.id
   const userId = req.body.userId;
@@ -89,7 +92,7 @@ const deleteOneSale = async (req, res) => {
   }
 };
 
-
+// yaat
 module.exports = {
   createSale,
   getAllSale,
